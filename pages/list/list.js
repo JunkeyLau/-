@@ -1,0 +1,57 @@
+const dayMap = ['星期天', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六']
+
+Page({
+  data: {
+    weekWeather: [],
+    city: '北京市'
+  },
+  onLoad(options) {
+    this.setData({
+      city:options.city
+    })
+    this.getWeekWeather()
+    console.log('onLoad')
+  },
+  onPullDownRefresh() {
+    this.getWeekWeather(() => {
+      wx.stopPullDownRefresh()
+    })
+    console.log("刷新完成！")
+  },
+  getWeekWeather(callback) {
+    wx.request({
+      url: 'https://test-miniprogram.com/api/weather/future',
+      data: {
+        time: new Date().getTime(),
+        city: this.data.city
+      },
+      success: res => {
+        //设置预报结果
+        let result = res.data.result
+        console.log(result)
+        this.setWeekWeather(result)
+        },
+        complete: () =>{
+          callback && callback()
+        }
+    })
+  },
+  setWeekWeather(result) {
+    let weekWeather = []
+    for (let i=0; i<7; i++) {
+      let date = new Date()
+      date.setDate(date.getDate() + i)
+      weekWeather.push({
+        day: dayMap[date.getDay()],
+        date: `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`,
+        temp: `${result[i].minTemp}° 至 ${result[i].maxTemp}°`,
+        iconPath: '/images/' + result[i].weather + '-icon.png'
+      })
+    }
+    weekWeather[0].day = '今天'
+    //注意添加this.setData()函数
+    this.setData({
+      weekWeather:weekWeather
+    })
+  },
+})
